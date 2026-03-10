@@ -22,7 +22,7 @@ public class ChatController {
 
     @PostMapping("/pergunta")
     public ResponseEntity<ChatBotResponse> fazerPergunta(@RequestBody ChatBotRequest chatBotRequest) {
-        String msg = chatService.conversarGemini(chatBotRequest.getMensagem());
+        String msg = chatService.JuntarRespostasIA(chatBotRequest.getMensagem());
         return ResponseEntity.ok(new ChatBotResponse(msg));
     }
     @PostMapping("/chat")
