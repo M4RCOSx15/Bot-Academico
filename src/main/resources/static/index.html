@@ -169,25 +169,15 @@
             font-size: 1.3rem;
         }
 
-        /* --- DESIGN RESPONSIVO PARA CELULAR --- */
-        @media (max-width: 768px) {
-            .sidebar {
-                display: none; /* Esconde o menu lateral no celular */
-            }
-            .chat-window {
-                padding: 20px 5%; /* Aumenta o espaço do chat */
-            }
-            .input-area {
-                padding: 20px 5%;
-            }
-            .message-wrapper {
-                max-width: 95%;
-            }
-            .bubble {
-                padding: 12px 16px;
-                font-size: 0.95rem;
-            }
-        }
+       @media (max-width: 768px) {
+    .sidebar { 
+        display: none !important; /* O !important força o desaparecimento */
+    }
+    .main-container {
+        width: 100% !important;
+        margin-left: 0 !important;
+    }
+}
         
         .bubble pre { background: #000; padding: 15px; border-radius: 8px; overflow-x: auto; margin: 10px 0; border: 1px solid var(--accent-cyan); }
         .bubble code { font-family: 'Courier New', Courier, monospace; color: var(--accent-cyan); }
