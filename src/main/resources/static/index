@@ -226,7 +226,6 @@
         const messageInput = document.getElementById("messageInput");
         const sendBtn = document.getElementById("sendBtn");
 
-        // Foco automático no input ao carregar
         window.onload = () => messageInput.focus();
 
         messageInput.addEventListener("keypress", (e) => {
@@ -238,11 +237,9 @@
         function addMessage(text, sender) {
             const wrapper = document.createElement("div");
             wrapper.className = `message-wrapper ${sender}`;
-            
             const label = document.createElement("div");
             label.className = "label";
             label.textContent = sender === "user" ? "Estudante" : "aT3o Academic AI";
-
             const bubble = document.createElement("div");
             bubble.className = "bubble";
             
@@ -264,7 +261,6 @@
 
             addMessage(text, "user");
             messageInput.value = "";
-            
             messageInput.disabled = true;
             sendBtn.disabled = true;
 
@@ -274,38 +270,33 @@
             loadingWrapper.id = loadingId;
             loadingWrapper.innerHTML = `
                 <div class="label">aT3o AI</div>
-                <div class="bubble"><i class="fas fa-circle-notch fa-spin"></i> Processando conhecimento...</div>
+                <div class="bubble"><i class="fas fa-circle-notch fa-spin"></i> Consultando pedido...</div>
             `;
             chatContainer.appendChild(loadingWrapper);
             chatContainer.scrollTop = chatContainer.scrollHeight;
 
             try {
-                // ALTERAÇÃO CRÍTICA: URL COMPLETA PARA EVITAR ERROS DE CAMINHO NO BROWSER
-                const response = await fetch("http://localhost:8080/bot/pergunta", {
+                // AGORA COM URL RELATIVA PARA O RAILWAY
+                const response = await fetch("/bot/pergunta", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ mensagem: text }) 
                 });
 
-                if (!response.ok) {
-                    throw new Error(`Erro HTTP: ${response.status}`);
-                }
+                if (!response.ok) throw new Error(`Erro: ${response.status}`);
 
                 const data = await response.json(); 
+                document.getElementById(loadingId).remove();
                 
-                const loadingElement = document.getElementById(loadingId);
-                if (loadingElement) loadingElement.remove();
-                
-                // Mapeia o campo do seu ChatBotResponse.java
-                const replyText = data.mensagem || data.reply || data.resposta || "Erro: Verifique o nome do campo no seu DTO Java.";
+                // Pega o campo do seu ChatBotResponse
+                const replyText = data.mensagem || data.reply || "Resposta processada com sucesso.";
                 addMessage(replyText, "bot");
 
             } catch (error) {
-                const loadingElement = document.getElementById(loadingId);
-                if (loadingElement) loadingElement.remove();
-                
-                addMessage("Falha na sincronização. Certifique-se que o Spring Boot está rodando em http://localhost:8080", "bot");
-                console.error("Erro detalhado da requisição:", error);
+    if(document.getElementById(loadingId)) document.getElementById(loadingId).remove();
+    // Isso vai te mostrar se o erro é 404, 500 ou "Connection Refused"
+    addMessage("Erro detectado: " + error.message, "bot"); 
+    console.error("Erro detalhado:", error);
             } finally {
                 messageInput.disabled = false;
                 sendBtn.disabled = false;
