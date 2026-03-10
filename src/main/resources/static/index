@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>aT3o - AI Academic Advisor</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-dark: #0b0e14;
+            --sidebar-bg: #151921;
+            --accent-cyan: #00f2ff;
+            --accent-blue: #3b82f6;
+            --user-bubble: #2563eb;
+            --bot-bubble: #1e293b;
+            --text-main: #f1f5f9;
+            --glass: rgba(255, 255, 255, 0.03);
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: var(--sidebar-bg);
+            display: flex;
+            flex-direction: column;
+            padding: 30px 20px;
+            border-right: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .brand {
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: var(--accent-cyan);
+            margin-bottom: 50px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            letter-spacing: -1px;
+        }
+
+        .brand i { filter: drop-shadow(0 0 8px var(--accent-cyan)); }
+
+        .nav-buttons { display: flex; flex-direction: column; gap: 12px; }
+
+        .btn-action {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: var(--glass);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-action:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: var(--accent-cyan);
+            transform: translateY(-2px);
+        }
+
+        .main-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: radial-gradient(circle at top right, #1a1f2e, #0b0e14);
+        }
+
+        .chat-window {
+            flex: 1;
+            padding: 40px 15%;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            scroll-behavior: smooth;
+        }
+
+        .message-wrapper {
+            display: flex;
+            flex-direction: column;
+            max-width: 85%;
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message-wrapper.user { align-self: flex-end; align-items: flex-end; }
+        .message-wrapper.bot { align-self: flex-start; align-items: flex-start; }
+
+        .bubble {
+            padding: 18px 24px;
+            border-radius: 22px;
+            line-height: 1.6;
+            font-size: 1rem;
+            position: relative;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        .user .bubble {
+            background: linear-gradient(135deg, var(--accent-blue), #1d4ed8);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .bot .bubble {
+            background: var(--bot-bubble);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-bottom-left-radius: 4px;
+        }
+
+        .label {
+            font-size: 0.7rem;
+            margin-bottom: 8px;
+            color: #64748b;
+            text-transform: uppercase;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+        }
+
+        .input-area { padding: 40px 15%; background: linear-gradient(to top, var(--bg-dark) 40%, transparent); }
+
+        .input-box {
+            display: flex;
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(10px);
+            padding: 12px 25px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: border-color 0.3s;
+        }
+
+        .input-box:focus-within { border-color: var(--accent-cyan); }
+
+        input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            padding: 12px;
+            outline: none;
+            font-size: 1.1rem;
+        }
+
+        .send-btn {
+            background: transparent;
+            border: none;
+            color: var(--accent-cyan);
+            cursor: pointer;
+            font-size: 1.5rem;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+        }
+
+        .send-btn:disabled { color: #475569; cursor: not-allowed; }
+
+        .bubble pre { background: #000; padding: 15px; border-radius: 8px; overflow-x: auto; margin: 10px 0; border: 1px solid var(--accent-cyan); }
+        .bubble code { font-family: 'Courier New', Courier, monospace; color: var(--accent-cyan); }
+        
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="brand">
+            <i class="fas fa-atom"></i>
+            <span>aT3o</span>
+        </div>
+        
+        <div class="nav-buttons">
+            <button class="btn-action" onclick="clearChat()">
+                <i class="fas fa-redo-alt"></i> RESETAR SESSÃO
+            </button>
+            <button class="btn-action" onclick="window.print()">
+                <i class="fas fa-print"></i> EXPORTAR LOG
+            </button>
+        </div>
+
+        <div style="margin-top: auto; font-size: 0.75rem; color: #475569; text-align: center;">
+            Academic AI v2.5 | 2026
+        </div>
+    </aside>
+
+    <main class="main-container">
+        <div class="chat-window" id="chat">
+            <div class="message-wrapper bot">
+                <div class="label">aT3o Academic AI</div>
+                <div class="bubble">Conexão estabelecida, Marcos. Qual o foco da nossa pesquisa hoje?</div>
+            </div>
+        </div>
+
+        <div class="input-area">
+            <div class="input-box">
+                <input id="messageInput" placeholder="Descreva sua dúvida técnica..." autocomplete="off">
+                <button class="send-btn" id="sendBtn">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const chatContainer = document.getElementById("chat");
+        const messageInput = document.getElementById("messageInput");
+        const sendBtn = document.getElementById("sendBtn");
+
+        // Foco automático no input ao carregar
+        window.onload = () => messageInput.focus();
+
+        messageInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter" && !messageInput.disabled) sendMessage();
+        });
+
+        sendBtn.addEventListener("click", sendMessage);
+
+        function addMessage(text, sender) {
+            const wrapper = document.createElement("div");
+            wrapper.className = `message-wrapper ${sender}`;
+            
+            const label = document.createElement("div");
+            label.className = "label";
+            label.textContent = sender === "user" ? "Estudante" : "aT3o Academic AI";
+
+            const bubble = document.createElement("div");
+            bubble.className = "bubble";
+            
+            if(sender === "bot") {
+                bubble.innerHTML = marked.parse(text);
+            } else {
+                bubble.textContent = text;
+            }
+
+            wrapper.appendChild(label);
+            wrapper.appendChild(bubble);
+            chatContainer.appendChild(wrapper);
+            chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
+        }
+
+        async function sendMessage() {
+            const text = messageInput.value.trim();
+            if (!text) return;
+
+            addMessage(text, "user");
+            messageInput.value = "";
+            
+            messageInput.disabled = true;
+            sendBtn.disabled = true;
+
+            const loadingId = "load-" + Date.now();
+            const loadingWrapper = document.createElement("div");
+            loadingWrapper.className = "message-wrapper bot";
+            loadingWrapper.id = loadingId;
+            loadingWrapper.innerHTML = `
+                <div class="label">aT3o AI</div>
+                <div class="bubble"><i class="fas fa-circle-notch fa-spin"></i> Processando conhecimento...</div>
+            `;
+            chatContainer.appendChild(loadingWrapper);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            try {
+                // ALTERAÇÃO CRÍTICA: URL COMPLETA PARA EVITAR ERROS DE CAMINHO NO BROWSER
+                const response = await fetch("http://localhost:8080/bot/pergunta", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ mensagem: text }) 
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Erro HTTP: ${response.status}`);
+                }
+
+                const data = await response.json(); 
+                
+                const loadingElement = document.getElementById(loadingId);
+                if (loadingElement) loadingElement.remove();
+                
+                // Mapeia o campo do seu ChatBotResponse.java
+                const replyText = data.mensagem || data.reply || data.resposta || "Erro: Verifique o nome do campo no seu DTO Java.";
+                addMessage(replyText, "bot");
+
+            } catch (error) {
+                const loadingElement = document.getElementById(loadingId);
+                if (loadingElement) loadingElement.remove();
+                
+                addMessage("Falha na sincronização. Certifique-se que o Spring Boot está rodando em http://localhost:8080", "bot");
+                console.error("Erro detalhado da requisição:", error);
+            } finally {
+                messageInput.disabled = false;
+                sendBtn.disabled = false;
+                messageInput.focus();
+            }
+        }
+
+        function clearChat() {
+            if(confirm("Deseja limpar o histórico visual?")) {
+                chatContainer.innerHTML = "";
+                addMessage("Nova sessão iniciada.", "bot");
+            }
+        }
+    </script>
+</body>
+</html>
